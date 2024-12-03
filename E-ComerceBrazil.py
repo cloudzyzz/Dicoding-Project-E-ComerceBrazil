@@ -7,20 +7,31 @@ from sklearn.preprocessing import MinMaxScaler
 import folium
 
 # ---- Fungsi Utilitas ----
+import pandas as pd
+import requests
+
 def load_data():
     """
-    Memuat dataset yang diperlukan
+    Memuat dataset dari Google Drive
     """
     try:
-        sales_reviews = pd.read_csv('sales_reviews.csv')
-        orders_merged = pd.read_csv('orders_merged.csv')
-        product_reviews = pd.read_csv('product_reviews.csv')
-        merged_data = pd.read_csv('merged_data.csv')
+        # URL dataset dari Google Drive
+        sales_reviews_url = "https://drive.google.com/file/d/1WbGpGDfakAtseeDJQC-fFjyldhAWECPS/view?usp=sharing"
+        orders_merged_url = "https://drive.google.com/file/d/1NypuA2Qed_kyFSY4dE6dR9X7gyWGomvh/view?usp=sharing"
+        product_reviews_url = "https://drive.google.com/file/d/19TcJk91HR5z2UO90LU8eDlkvJr5AMfMf/view?usp=sharing"
+        merged_data_url = "https://drive.google.com/file/d/1gYM7j1dt-Zf7Glc51OpFz6Cas5RCul6y/view?usp=sharing"
+
+        # Unduh dataset
+        sales_reviews = pd.read_csv(sales_reviews_url)
+        orders_merged = pd.read_csv(orders_merged_url)
+        product_reviews = pd.read_csv(product_reviews_url)
+        merged_data = pd.read_csv(merged_data_url)
 
         return sales_reviews, orders_merged, product_reviews, merged_data
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None, None, None, None
+
 
 def process_orders_data(orders_merged):
     """
