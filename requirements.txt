@@ -1,7 +1,7 @@
-pandas==1.5.3
-seaborn==0.12.2
-matplotlib==3.7.2
-plotly==5.15.0
-streamlit==1.26.0
-scikit-learn==1.3.1
-folium==0.14.0
+pandas
+seaborn
+matplotlib
+plotly
+streamlit
+scikit-learn
+folium
