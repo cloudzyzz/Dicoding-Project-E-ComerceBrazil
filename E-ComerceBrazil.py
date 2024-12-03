@@ -49,10 +49,15 @@ def create_sales_review_plots(sales_reviews):
     """
     Membuat visualisasi hubungan penjualan dan ulasan
     """
+    sales_reviews.columns = sales_reviews.columns.str.strip()  # Menghapus spasi dari nama kolom
+
+    if 'seller_id' in sales_reviews.columns:
     seller_performance = sales_reviews.groupby('seller_id').agg({
         'order_item_id': 'count',
         'review_score': 'mean'
     }).reset_index().rename(columns={'order_item_id': 'total_sales'})
+    else:
+    st.error("Kolom 'seller_id' tidak ditemukan dalam dataset!")
 
     # Seaborn plot
     fig_sns, ax = plt.subplots(figsize=(10, 6))
