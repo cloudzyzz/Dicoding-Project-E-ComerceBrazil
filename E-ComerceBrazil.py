@@ -12,11 +12,11 @@ def load_data():
     Memuat dataset yang diperlukan
     """
     try:
-        # URL dataset dari Google Drive
-        sales_reviews_url = "https://drive.google.com/file/d/1WbGpGDfakAtseeDJQC-fFjyldhAWECPS/view?usp=sharing"
-        orders_merged_url = "https://drive.google.com/file/d/1NypuA2Qed_kyFSY4dE6dR9X7gyWGomvh/view?usp=sharing"
-        product_reviews_url = "https://drive.google.com/file/d/19TcJk91HR5z2UO90LU8eDlkvJr5AMfMf/view?usp=sharing"
-        merged_data_url = "https://drive.google.com/file/d/1gYM7j1dt-Zf7Glc51OpFz6Cas5RCul6y/view?usp=sharing"
+        # Update to direct download links
+        sales_reviews_url = "https://drive.google.com/uc?id=1WbGpGDfakAtseeDJQC-fFjyldhAWECPS"
+        orders_merged_url = "https://drive.google.com/uc?id=1NypuA2Qed_kyFSY4dE6dR9X7gyWGomvh"
+        product_reviews_url = "https://drive.google.com/uc?id=19TcJk91HR5z2UO90LU8eDlkvJr5AMfMf"
+        merged_data_url = "https://drive.google.com/uc?id=1gYM7j1dt-Zf7Glc51OpFz6Cas5RCul6y"
 
         # Unduh dataset
         sales_reviews = pd.read_csv(sales_reviews_url)
