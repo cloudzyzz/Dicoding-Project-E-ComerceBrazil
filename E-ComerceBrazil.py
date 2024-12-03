@@ -22,10 +22,10 @@ def load_data():
         merged_data_url = "https://drive.google.com/file/d/1gYM7j1dt-Zf7Glc51OpFz6Cas5RCul6y/view?usp=sharing"
 
         # Unduh dataset
-        sales_reviews = pd.read_csv(sales_reviews_url, delimiter=';')
-        orders_merged = pd.read_csv(orders_merged_url, delimiter=';')
-        product_reviews = pd.read_csv(product_reviews_url, delimiter=';')
-        merged_data = pd.read_csv(merged_data_url, delimiter=';')
+        sales_reviews = pd.read_csv(sales_reviews_url, delimiter=';', on_bad_lines='skip')
+        orders_merged = pd.read_csv(orders_merged_url, delimiter=';', on_bad_lines='skip')
+        product_reviews = pd.read_csv(product_reviews_url, delimiter=';', on_bad_lines='skip')
+        merged_data = pd.read_csv(merged_data_url, delimiter=';', on_bad_lines='skip')
 
         return sales_reviews, orders_merged, product_reviews, merged_data
     except Exception as e:
