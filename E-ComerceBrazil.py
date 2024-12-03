@@ -7,12 +7,9 @@ from sklearn.preprocessing import MinMaxScaler
 import folium
 
 # ---- Fungsi Utilitas ----
-import pandas as pd
-import requests
-
 def load_data():
     """
-    Memuat dataset dari Google Drive
+    Memuat dataset yang diperlukan
     """
     try:
         # URL dataset dari Google Drive
@@ -22,16 +19,15 @@ def load_data():
         merged_data_url = "https://drive.google.com/file/d/1gYM7j1dt-Zf7Glc51OpFz6Cas5RCul6y/view?usp=sharing"
 
         # Unduh dataset
-        sales_reviews = pd.read_csv(sales_reviews_url, delimiter=';', on_bad_lines='skip')
-        orders_merged = pd.read_csv(orders_merged_url, delimiter=';', on_bad_lines='skip')
-        product_reviews = pd.read_csv(product_reviews_url, delimiter=';', on_bad_lines='skip')
-        merged_data = pd.read_csv(merged_data_url, delimiter=';', on_bad_lines='skip')
+        sales_reviews = pd.read_csv(sales_reviews_url)
+        orders_merged = pd.read_csv(orders_merged_url)
+        product_reviews = pd.read_csv(product_reviews_url)
+        merged_data = pd.read_csv(merged_data_url)
 
         return sales_reviews, orders_merged, product_reviews, merged_data
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None, None, None, None
-
 
 def process_orders_data(orders_merged):
     """
@@ -49,16 +45,10 @@ def create_sales_review_plots(sales_reviews):
     """
     Membuat visualisasi hubungan penjualan dan ulasan
     """
-    sales_reviews.columns = sales_reviews.columns.str.strip()  # Menghapus spasi dari nama kolom
-
-    if 'seller_id' in sales_reviews.columns:
-        seller_performance = sales_reviews.groupby('seller_id').agg({
-            'order_item_id': 'count',
-            'review_score': 'mean'
-        }).reset_index().rename(columns={'order_item_id': 'total_sales'})
-    else:
-        st.error("Kolom 'seller_id' tidak ditemukan dalam dataset!")
-        return
+    seller_performance = sales_reviews.groupby('seller_id').agg({
+        'order_item_id': 'count',
+        'review_score': 'mean'
+    }).reset_index().rename(columns={'order_item_id': 'total_sales'})
 
     # Seaborn plot
     fig_sns, ax = plt.subplots(figsize=(10, 6))
