@@ -1,18 +1,8 @@
-pip install pandas
-pip install seaborn
-pip install folium
-pip install matplotlib.pyplot
-pip install streamlit
-pip install sklearn
-
-import pandas as pd
-import seaborn as sns
-import folium
-import matplotlib.pyplot as plt
-import plotly.express as px
-import streamlit as st
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.cluster import KMeans
+streamlit
+pandas
+seaborn
+matplotlib
+numpy
+sklearn
+folium
+matplotlib.pyplot
