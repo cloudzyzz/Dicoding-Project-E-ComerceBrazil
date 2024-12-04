@@ -29,6 +29,15 @@ def load_data():
         st.error(f"Error loading data: {str(e)}")
         return None, None, None, None
 
+def filter_data_by_date(data, date_column, start_date, end_date):
+    # Ensure date_column is in datetime format
+    data[date_column] = pd.to_datetime(data[date_column])
+    # Ensure start_date and end_date are datetime objects
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+    # Apply the filter
+    return data[(data[date_column] >= start_date) & (data[date_column] <= end_date)]
+
 def process_orders_data(orders_merged):
     """
     Memproses data orders untuk analisis
@@ -41,16 +50,17 @@ def process_orders_data(orders_merged):
     return orders_merged
 
 # ---- Fungsi Visualisasi ----
-def create_sales_review_plots(sales_reviews):
+def create_sales_review_plots(sales_reviews, orders_merged):
     """
-    Membuat visualisasi hubungan penjualan dan ulasan
+    Function that uses both sales_reviews and orders_merged
     """
+    # Example of using orders_merged alongside sales_reviews
     seller_performance = sales_reviews.groupby('seller_id').agg({
         'order_item_id': 'count',
         'review_score': 'mean'
     }).reset_index().rename(columns={'order_item_id': 'total_sales'})
 
-    # Seaborn plot
+    # Generate plots (unchanged)
     fig_sns, ax = plt.subplots(figsize=(10, 6))
     sns.scatterplot(data=seller_performance, x='total_sales', y='review_score', alpha=0.7, ax=ax)
     ax.set_title('Total Sales vs Average Review Score')
@@ -59,14 +69,16 @@ def create_sales_review_plots(sales_reviews):
     st.pyplot(fig_sns)
 
     # Plotly plot
-    fig_plotly = px.scatter(seller_performance, 
-                           x='total_sales', 
-                           y='review_score',
-                           title='Total Sales vs Review Score per Seller',
-                           labels={'total_sales': 'Total Sales', 
-                                 'review_score': 'Average Review Score'},
-                           hover_data=['seller_id'])
+    fig_plotly = px.scatter(
+        seller_performance,
+        x='total_sales',
+        y='review_score',
+        title='Total Sales vs Review Score per Seller',
+        labels={'total_sales': 'Total Sales', 'review_score': 'Average Review Score'},
+        hover_data=['seller_id']
+    )
     st.plotly_chart(fig_plotly)
+
 
 def create_payment_analysis_plots(orders_merged):
     """
@@ -306,8 +318,51 @@ def main():
     
     # Periksa apakah semua data berhasil dimuat
     if all(df is not None for df in [sales_reviews, orders_merged, product_reviews, merged_data]):
-        # Sidebar navigation
+        # Sidebar navigation dan date range picker
         st.sidebar.title('Navigation')
+        
+        # Ensure datetime conversion
+        orders_merged['order_purchase_timestamp'] = pd.to_datetime(orders_merged['order_purchase_timestamp'])
+        
+        # Date range picker
+        min_date = orders_merged['order_purchase_timestamp'].min()
+        max_date = orders_merged['order_purchase_timestamp'].max()
+        
+        start_date = st.sidebar.date_input(
+            'Tanggal Mulai', 
+            min_value=min_date.date(), 
+            max_value=max_date.date(), 
+            value=min_date.date()
+        )
+        
+        end_date = st.sidebar.date_input(
+            'Tanggal Akhir', 
+            min_value=min_date.date(), 
+            max_value=max_date.date(), 
+            value=max_date.date()
+        )
+        
+        # Convert date inputs to datetime for filtering
+        start_datetime = pd.Timestamp(start_date)
+        end_datetime = pd.Timestamp(end_date)
+        
+        # Filter data berdasarkan rentang tanggal
+        filtered_orders_merged = filter_data_by_date(
+            orders_merged, 
+            'order_purchase_timestamp', 
+            start_datetime, 
+            end_datetime
+        )
+        
+        # Filter merged_data
+        filtered_merged_data = filter_data_by_date(
+            merged_data, 
+            'order_purchase_timestamp', 
+            start_datetime, 
+            end_datetime
+        )
+        
+        # Sidebar navigation
         selected_page = st.sidebar.radio(
             'Pilih Halaman',
             [
@@ -320,22 +375,28 @@ def main():
         if selected_page == 'Analysis Awal':
             st.header('Analysis Awal')
             st.subheader('Hubungan Penjualan dan Ulasan')
-            create_sales_review_plots(sales_reviews)
+            filtered_sales_reviews = sales_reviews[
+                sales_reviews['order_id'].isin(filtered_orders_merged['order_id'])
+            ]
+            create_sales_review_plots(filtered_sales_reviews, filtered_orders_merged)
             
             st.subheader('Metode Pembayaran dan Waktu Pemrosesan')
-            create_payment_analysis_plots(orders_merged)
+            create_payment_analysis_plots(filtered_orders_merged)
             
             st.subheader('Kategori Produk dan Kepuasan Pelanggan')
-            create_product_category_plots(product_reviews)
+            filtered_product_reviews = product_reviews[
+            product_reviews['order_id'].isin(filtered_orders_merged['order_id'])
+            ]
+            create_product_category_plots(filtered_product_reviews)
 
         # Halaman "Analysis Lanjutan"
         elif selected_page == 'Analysis Lanjutan':
             st.header('Analysis Lanjutan')
             st.subheader('RFM Analysis')
-            rfm_analysis(merged_data)
+            rfm_analysis(filtered_merged_data)
             
             st.subheader('Clustering Analysis')
-            clustering_analysis(merged_data)
+            clustering_analysis(filtered_merged_data)
     
     # Pesan jika data gagal dimuat
     else:
