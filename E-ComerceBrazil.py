@@ -17,14 +17,16 @@ def load_data():
         orders_merged_url = "https://drive.google.com/uc?id=1NypuA2Qed_kyFSY4dE6dR9X7gyWGomvh"
         product_reviews_url = "https://drive.google.com/uc?id=19TcJk91HR5z2UO90LU8eDlkvJr5AMfMf"
         merged_data_url = "https://drive.google.com/uc?id=1gYM7j1dt-Zf7Glc51OpFz6Cas5RCul6y"
+        geo_orders_url = "https://drive.google.com/uc?id=1tcJ2MR2tEklI2LmMLl2YcolKJZaZSWuI"
 
         # Unduh dataset
         sales_reviews = pd.read_csv(sales_reviews_url)
         orders_merged = pd.read_csv(orders_merged_url)
         product_reviews = pd.read_csv(product_reviews_url)
         merged_data = pd.read_csv(merged_data_url)
+        geo_orders = pd.read_csv(geo_orders_url)
 
-        return sales_reviews, orders_merged, product_reviews, merged_data
+        return sales_reviews, orders_merged, product_reviews, merged_data, geo_orders
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
         return None, None, None, None
@@ -68,18 +70,6 @@ def create_sales_review_plots(sales_reviews, orders_merged):
     ax.set_ylabel('Average Review Score')
     st.pyplot(fig_sns)
 
-    # Plotly plot
-    fig_plotly = px.scatter(
-        seller_performance,
-        x='total_sales',
-        y='review_score',
-        title='Total Sales vs Review Score per Seller',
-        labels={'total_sales': 'Total Sales', 'review_score': 'Average Review Score'},
-        hover_data=['seller_id']
-    )
-    st.plotly_chart(fig_plotly)
-
-
 def create_payment_analysis_plots(orders_merged):
     """
     Membuat visualisasi analisis pembayaran
@@ -97,16 +87,6 @@ def create_payment_analysis_plots(orders_merged):
     ax.set_ylabel('Avg Processing Time (hours)')
     plt.xticks(rotation=45)
     st.pyplot(fig_sns)
-
-    # Plotly plot
-    fig_plotly = px.bar(payment_analysis, 
-                        x='payment_type', 
-                        y='processing_time',
-                        title='Average Processing Time by Payment Method',
-                        labels={'payment_type': 'Payment Method', 
-                               'processing_time': 'Avg Processing Time (hours)'},
-                        color='processing_time')
-    st.plotly_chart(fig_plotly)
 
 def create_product_category_plots(product_reviews):
     """
@@ -126,6 +106,40 @@ def create_product_category_plots(product_reviews):
     ax.set_xlabel('Average Review Score')
     ax.set_ylabel('Product Category')
     st.pyplot(fig)
+
+def analyze_delivery_times(geo_orders):
+    """
+    Analyze delivery times by city and create visualizations
+    """
+    # Menghitung delivery time
+    geo_orders['delivery_time'] = (
+        pd.to_datetime(geo_orders['order_delivered_customer_date']) - pd.to_datetime(geo_orders['order_purchase_timestamp'])
+    ).dt.total_seconds() / 3600
+
+    # Aggregate delivery time by city and include geolocation data
+    city_delivery = geo_orders.groupby('geolocation_city').agg({
+        'delivery_time': 'mean',
+        'order_id': 'count',
+        'geolocation_lat': 'first',
+        'geolocation_lng': 'first'
+    }).reset_index().rename(columns={'order_id': 'total_orders'})
+
+    # Identify fastest and slowest delivery cities
+    fastest_city = city_delivery.loc[city_delivery['delivery_time'].idxmin()]
+    slowest_city = city_delivery.loc[city_delivery['delivery_time'].idxmax()]
+
+    # Bar plot: Average Delivery Time by City
+    top_cities = city_delivery.sort_values('delivery_time').head(10)
+    
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=top_cities, x='delivery_time', y='geolocation_city', palette='coolwarm')
+    plt.title('Top 10 Cities with Fastest Delivery Times')
+    plt.xlabel('Avg Delivery Time (hours)')
+    plt.ylabel('City')
+    st.pyplot(plt)
+    plt.close()
+
+    return city_delivery
 
 # ---- Fungsi Analisis Lanjutan ----
 def rfm_analysis(merged_data):
@@ -314,10 +328,10 @@ def main():
     st.title('Dashboard Analisis E-commerce')
 
     # Load data
-    sales_reviews, orders_merged, product_reviews, merged_data = load_data()
+    sales_reviews, orders_merged, product_reviews, merged_data , geo_orders = load_data()
     
     # Periksa apakah semua data berhasil dimuat
-    if all(df is not None for df in [sales_reviews, orders_merged, product_reviews, merged_data]):
+    if all(df is not None for df in [sales_reviews, orders_merged, product_reviews, merged_data, geo_orders]):
         # Sidebar navigation dan date range picker
         st.sidebar.title('Navigation')
         
@@ -366,8 +380,8 @@ def main():
         selected_page = st.sidebar.radio(
             'Pilih Halaman',
             [
-                'Analysis Awal',  # Berisi 3 visualisasi awal
-                'Analysis Lanjutan'  # Berisi 2 visualisasi lanjutan
+                'Analysis Awal',  
+                'Analysis Lanjutan'  
             ]
         )
         
@@ -388,6 +402,21 @@ def main():
             product_reviews['order_id'].isin(filtered_orders_merged['order_id'])
             ]
             create_product_category_plots(filtered_product_reviews)
+
+            st.subheader('Kota yang Memiliki Waktu Pengiriman Tercepat')
+            
+            # Periksa apakah geo_orders tersedia
+            if geo_orders is not None:
+                # Filter geo_orders berdasarkan rentang tanggal
+                filtered_geo_orders = filter_data_by_date(
+                    geo_orders, 
+                    'order_purchase_timestamp', 
+                    start_datetime, 
+                    end_datetime
+                )
+                
+                # Jalankan analisis waktu pengiriman
+                analyze_delivery_times(filtered_geo_orders)
 
         # Halaman "Analysis Lanjutan"
         elif selected_page == 'Analysis Lanjutan':
