@@ -85,26 +85,26 @@ def create_payment_analysis_plots(orders_merged):
     ax.set_title('Processing Time by Payment Method')
     ax.set_xlabel('Payment Method')
     ax.set_ylabel('Avg Processing Time (hours)')
-    plt.xticks(rotation=45)
     st.pyplot(fig_sns)
 
 def create_product_category_plots(product_reviews):
     """
     Membuat visualisasi kategori produk dan kepuasan pelanggan
     """
+    # Mengelompokkan data
     category_analysis = product_reviews.groupby('product_category_name').agg({
         'review_score': ['mean', 'count']
     }).reset_index()
     category_analysis.columns = ['product_category_name', 'avg_review_score', 'total_reviews']
 
-    # Top 10 categories
-    top_categories = category_analysis.sort_values('avg_review_score', ascending=False).head(10)
-
+    # Plotting
     fig, ax = plt.subplots(figsize=(12, 6))
-    sns.barplot(data=top_categories, x='avg_review_score', y='product_category_name', palette='viridis', ax=ax)
+    sns.scatterplot(data=category_analysis, x='total_reviews', y='avg_review_score', alpha=0.7)
     ax.set_title('Top 10 Product Categories by Average Review Score')
     ax.set_xlabel('Average Review Score')
     ax.set_ylabel('Product Category')
+
+    # Menampilkan grafik di Streamlit
     st.pyplot(fig)
 
 def analyze_delivery_times(geo_orders):
